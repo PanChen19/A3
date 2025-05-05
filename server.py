@@ -9,6 +9,56 @@ import time        #  For timing (to be used later)
 
 tuple_space = {}               #  Shared dictionary for client data
 space_lock = threading.Lock()  #  Lock to prevent data conflict between threads
+# Step 4: Handle and process client requests
+#  Process PUT, GET, READ operations from clients
+
+def process_request(request):
+    try:
+        parts = request.strip().split(" ", 2)  #  Split request into parts
+        if len(parts) < 2:
+            return "000 ERR Invalid request format"
+
+        cmd = parts[1]  #  Get command type
+
+        if cmd == 'P':  # PUT
+            if len(parts) < 3:
+                return "000 ERR Missing key or value"
+            key_value = parts[2].split(" ", 1)
+            if len(key_value) < 2:
+                return "000 ERR Incomplete key-value"
+            key, value = key_value
+            with space_lock:
+                if key in tuple_space:
+                    msg = f"ERR {key} already exists"
+                else:
+                    tuple_space[key] = value
+                    msg = f"OK ({key}, {value}) added"
+
+        elif cmd == 'G':  # GET
+            key = parts[2]
+            with space_lock:
+                if key in tuple_space:
+                    value = tuple_space.pop(key)
+                    msg = f"OK ({key}, {value}) removed"
+                else:
+                    msg = f"ERR {key} not found"
+
+        elif cmd == 'R':  # READ
+            key = parts[2]
+            with space_lock:
+                if key in tuple_space:
+                    value = tuple_space[key]
+                    msg = f"OK ({key}, {value}) exists"
+                else:
+                    msg = f"ERR {key} not found"
+
+        else:
+            msg = "ERR Unknown command"
+
+    except Exception as e:
+        msg = f"ERR Exception: {str(e)}"
+
+    return f"{len(msg):03d} {msg}"
 # Step 2: Use threads to handle multiple clients
 #  Each client gets its own thread so the server can continue accepting others
 
