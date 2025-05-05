@@ -4,6 +4,11 @@
 import socket      # For network communication
 import threading   # For handling multiple clients later
 import time        #  For timing (to be used later)
+#  Step 3:  Define shared tuple space and lock
+#  Stores key-value pairs safely during multithreaded access
+
+tuple_space = {}               #  Shared dictionary for client data
+space_lock = threading.Lock()  #  Lock to prevent data conflict between threads
 # Step 2: Use threads to handle multiple clients
 #  Each client gets its own thread so the server can continue accepting others
 
